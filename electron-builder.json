@@ -1,0 +1,37 @@
+{
+  "appId": "com.agri-pos.desktop",
+  "productName": "المتجر الزراعي",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/dist/**/*",
+    "public/icons/**/*"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "public/icons/icon-512x512.png",
+    "artifactName": "agri-pos-setup-${version}.${ext}"
+  },
+  "mac": {
+    "target": "dmg",
+    "icon": "public/icons/icon-512x512.png"
+  },
+  "linux": {
+    "target": "AppImage",
+    "icon": "public/icons/icon-512x512.png"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "uninstallDisplayName": "المتجر الزراعي",
+    "installerLanguages": ["ar"],
+    "language": 1025
+  }
+}
