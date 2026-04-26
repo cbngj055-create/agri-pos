@@ -1,4 +1,5 @@
 import {
+  initDatabase,
   getDatabase,
   getPendingRows,
   getDeletedRows,
@@ -372,6 +373,7 @@ export function resolveConflict(table: string, id: string, acceptServer: boolean
 
 // --- Auth helpers ---
 export async function login(email: string, password: string): Promise<{ token: string; user: any }> {
+  await initDatabase();
   const response = await apiRequest('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
@@ -397,6 +399,7 @@ export async function login(email: string, password: string): Promise<{ token: s
 }
 
 export async function register(username: string, email: string, password: string, storeName: string): Promise<{ token: string; user: any }> {
+  await initDatabase();
   const response = await apiRequest('/auth/register', {
     method: 'POST',
     body: JSON.stringify({ username, email, password, storeName }),
