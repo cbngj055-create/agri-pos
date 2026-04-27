@@ -14,11 +14,11 @@ async function sha256(text: string): Promise<string> {
 
 export default function Settings() {
   const navigate = useNavigate();
-  const [storeName, setStoreName] = useState('نماء الزراعية');
-  const [phone, setPhone] = useState('01012345678');
-  const [address, setAddress] = useState('القاهرة - طريق مصر الزراعي');
-  const [taxRate, setTaxRate] = useState('14');
-  const [receiptFooter, setReceiptFooter] = useState('شكراً لزيارتكم، البضاعة المباعة لا ترد ولا تستبدل بعد 14 يوم.');
+  const [storeName, setStoreName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [taxRate, setTaxRate] = useState('0');
+  const [receiptFooter, setReceiptFooter] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [apiUrl, setApiUrlState] = useState(getApiUrl());
   const [pinEnabled, setPinEnabledState] = useState(getSyncMeta('pin_enabled') === '1');
@@ -35,8 +35,52 @@ export default function Settings() {
     return unsub;
   }, []);
 
+  useEffect(() => {
+    const existingStoreName = getSyncMeta('store_name');
+    const existingPhone = getSyncMeta('store_phone');
+    const existingAddress = getSyncMeta('store_address');
+    const existingTaxRate = getSyncMeta('tax_rate');
+    const existingReceiptFooter = getSyncMeta('receipt_footer');
+
+    setStoreName(existingStoreName || '');
+    setPhone(existingPhone || '');
+    setAddress(existingAddress || '');
+    setTaxRate(existingTaxRate || '0');
+    setReceiptFooter(existingReceiptFooter || '');
+  }, []);
+
+  const saveTimerRef = React.useRef<number | null>(null);
+  useEffect(() => {
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = window.setTimeout(() => {
+      setSyncMeta('store_name', storeName);
+      setSyncMeta('store_phone', phone);
+      setSyncMeta('store_address', address);
+      setSyncMeta('tax_rate', taxRate || '0');
+      setSyncMeta('receipt_footer', receiptFooter);
+      setIsSaved(true);
+      window.setTimeout(() => setIsSaved(false), 1500);
+    }, 600);
+
+    return () => {
+      if (saveTimerRef.current) {
+        window.clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, [storeName, phone, address, taxRate, receiptFooter]);
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+
+    setSyncMeta('store_name', storeName);
+    setSyncMeta('store_phone', phone);
+    setSyncMeta('store_address', address);
+    setSyncMeta('tax_rate', taxRate || '0');
+    setSyncMeta('receipt_footer', receiptFooter);
+
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
@@ -177,9 +221,10 @@ export default function Settings() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">نسبة ضريبة القيمة المضافة (%)</label>
                   <input 
                     type="number" 
+                    min="0"
                     className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition" 
                     value={taxRate} 
-                    onChange={e => setTaxRate(e.target.value)} 
+                    onChange={e => setTaxRate(e.target.value === '' ? '0' : e.target.value)} 
                   />
                 </div>
                 <div className="sm:col-span-2">

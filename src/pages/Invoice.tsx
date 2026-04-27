@@ -120,7 +120,7 @@ export default function Invoice() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 print:block print:space-y-0 print:text-black">
+    <div className="invoice-print max-w-6xl mx-auto space-y-6 print:block print:space-y-0 print:text-black print:max-w-none print:w-full print:mx-0">
       <div className="flex items-center justify-between print:hidden">
         <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <FileText className="w-6 h-6 text-emerald-600" />

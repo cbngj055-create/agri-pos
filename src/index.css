@@ -10,3 +10,22 @@
     color: #1e293b;
   }
 }
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  body {
+    background: white;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .invoice-print {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+}
