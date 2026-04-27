@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, BarChart3, Leaf, Zap, Smartphone, CheckCircle2, Factory, Stethoscope, Briefcase, LayoutDashboard } from 'lucide-react';
+import { ShieldCheck, BarChart3, Leaf, Zap, Smartphone, CheckCircle2, Factory, Stethoscope, Briefcase, LayoutDashboard, Download } from 'lucide-react';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -70,6 +70,10 @@ export default function Landing() {
               <Zap className="w-6 h-6" />
               قم بإنشاء حساب لمتجرك
             </Link>
+            <a href="/agri-pos.apk" download className="bg-white text-slate-700 px-8 py-4 rounded-xl font-bold border-2 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 transition shadow-sm text-lg flex justify-center items-center gap-2">
+              <Download className="w-6 h-6" />
+              تحميل تطبيق الموبايل
+            </a>
             <Link to="/login" className="bg-white text-slate-700 px-8 py-4 rounded-xl font-bold border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition shadow-sm text-lg text-center flex justify-center items-center">
               هل لديك متجر بالفعل؟
             </Link>
