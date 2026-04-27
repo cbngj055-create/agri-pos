@@ -49,25 +49,25 @@ export default function Dashboard() {
 
       <h3 className="text-lg font-bold text-slate-800 mt-8 mb-4">إجراءات سريعة</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link to="/products" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-md transition flex flex-col items-center justify-center gap-3 h-32">
+        <Link to="/app/products" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-md transition flex flex-col items-center justify-center gap-3 h-32">
           <div className="p-3 bg-blue-50 text-blue-600 rounded-full">
             <Package className="w-6 h-6" />
           </div>
           <span className="font-medium text-slate-700">تسجيل الأصناف</span>
         </Link>
-        <Link to="/invoice" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-md transition flex flex-col items-center justify-center gap-3 h-32">
+        <Link to="/app/invoice" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-md transition flex flex-col items-center justify-center gap-3 h-32">
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-full">
             <FileText className="w-6 h-6" />
           </div>
           <span className="font-medium text-slate-700">فاتورة مبيعات ذكية</span>
         </Link>
-        <Link to="/purchases" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-md transition flex flex-col items-center justify-center gap-3 h-32">
+        <Link to="/app/purchases" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-md transition flex flex-col items-center justify-center gap-3 h-32">
           <div className="p-3 bg-amber-50 text-amber-600 rounded-full">
             <Truck className="w-6 h-6" />
           </div>
           <span className="font-medium text-slate-700">فاتورة مشتريات</span>
         </Link>
-        <Link to="/reports" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-md transition flex flex-col items-center justify-center gap-3 h-32">
+        <Link to="/app/reports" className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-md transition flex flex-col items-center justify-center gap-3 h-32">
           <div className="p-3 bg-indigo-50 text-indigo-600 rounded-full">
             <TrendingUp className="w-6 h-6" />
           </div>

@@ -47,10 +47,18 @@ class SyncService {
   static SyncState _state = SyncState();
   static Timer? _syncTimer;
   static final _controller = StreamController<SyncState>.broadcast();
+  static String? _deviceId;
   static const _syncTables = [
-    'products', 'categories', 'orders', 'order_items',
-    'customers', 'suppliers', 'payments', 'expenses',
-    'employees', 'prescriptions',
+    'products',
+    'categories',
+    'orders',
+    'order_items',
+    'customers',
+    'suppliers',
+    'payments',
+    'expenses',
+    'employees',
+    'prescriptions',
   ];
 
   static Stream<SyncState> get stateStream => _controller.stream;
@@ -88,7 +96,8 @@ class SyncService {
     }
   }
 
-  static Future<void> register(String username, String email, String password, String storeName) async {
+  static Future<void> register(
+      String username, String email, String password, String storeName) async {
     final response = await _request('POST', '/auth/register', body: {
       'username': username,
       'email': email,
@@ -124,10 +133,18 @@ class SyncService {
   static Future<void> initSyncSystem() async {
     _token = await AppDatabase.authToken;
 
+    _deviceId = await AppDatabase.getSyncMeta('device_id');
+    if (_deviceId == null || _deviceId!.isEmpty) {
+      _deviceId = AppDatabase.generateId();
+      await AppDatabase.setSyncMeta('device_id', _deviceId!);
+    }
+
     // Monitor connectivity
     Connectivity().onConnectivityChanged.listen((results) {
       final online = results.any((r) => r != ConnectivityResult.none);
-      _emit(_state.copyWith(isOnline: online, status: online ? SyncStatus.idle : SyncStatus.offline));
+      _emit(_state.copyWith(
+          isOnline: online,
+          status: online ? SyncStatus.idle : SyncStatus.offline));
       if (online) performFullSync();
     });
 
@@ -164,18 +181,39 @@ class SyncService {
   static Future<void> _pushChanges() async {
     _emit(_state.copyWith(status: SyncStatus.pushing));
 
+    if (_deviceId == null || _deviceId!.isEmpty) {
+      _deviceId = await AppDatabase.getSyncMeta('device_id');
+      if (_deviceId == null || _deviceId!.isEmpty) {
+        _deviceId = AppDatabase.generateId();
+        await AppDatabase.setSyncMeta('device_id', _deviceId!);
+      }
+    }
+
+    final Map<String, dynamic> data = {};
+
     for (final table in _syncTables) {
       final pending = await AppDatabase.getPending(table);
       if (pending.isEmpty) continue;
 
-      final response = await _request('POST', '/sync/push', body: {
-        'table_name': table,
-        'records': pending,
-      });
+      data[table] = pending;
+    }
 
-      if (response.statusCode == 200) {
-        for (final record in pending) {
-          await AppDatabase.markSynced(table, record['id'] as String);
+    if (data.isEmpty) return;
+
+    final response = await _request('POST', '/sync/push', body: {
+      'device_id': _deviceId,
+      'data': data,
+    });
+
+    if (response.statusCode == 200) {
+      for (final entry in data.entries) {
+        final table = entry.key;
+        final rows = (entry.value as List).cast<Map<String, dynamic>>();
+        for (final record in rows) {
+          final id = record['id'];
+          if (id is String && id.isNotEmpty) {
+            await AppDatabase.markSynced(table, id);
+          }
         }
       }
     }
@@ -184,32 +222,62 @@ class SyncService {
   static Future<void> _pullChanges() async {
     _emit(_state.copyWith(status: SyncStatus.pulling));
 
-    final lastSync = await AppDatabase.getSyncMeta('last_sync_at') ?? '0';
+    final lastSync = await AppDatabase.getSyncMeta('last_sync') ??
+        await AppDatabase.getSyncMeta('last_sync_at') ??
+        '0';
 
     final response = await _request('GET', '/sync/pull?last_sync=$lastSync');
     if (response.statusCode != 200) return;
 
-    final data = jsonDecode(response.body);
+    final decoded = jsonDecode(response.body);
+    final serverData = (decoded is Map && decoded['data'] is Map)
+        ? Map<String, dynamic>.from(decoded['data'] as Map)
+        : <String, dynamic>{};
 
-    for (final table in _syncTables) {
-      final records = data[table] as List? ?? [];
-      for (final record in records) {
-        final map = Map<String, dynamic>.from(record);
+    for (final entry in serverData.entries) {
+      final key = entry.key;
+      final rows = entry.value as List? ?? [];
+
+      if (key.startsWith('_deleted_')) {
+        final table = key.replaceFirst('_deleted_', '');
+        for (final record in rows) {
+          final map = Map<String, dynamic>.from(record as Map);
+          final id = map['id'] as String?;
+          final deletedAt = map['deleted_at'];
+          final updatedAt = map['updated_at'];
+          if (id == null) continue;
+          if (deletedAt is int && updatedAt is int) {
+            await AppDatabase.applyServerDelete(
+                table, id, deletedAt, updatedAt);
+          }
+        }
+        continue;
+      }
+
+      // Normal upserts
+      for (final record in rows) {
+        final map = Map<String, dynamic>.from(record as Map);
+        final id = map['id'] as String?;
+        if (id == null) continue;
         if (map['deleted_at'] != null) {
-          await AppDatabase.applyServerDelete(
-            table,
-            map['id'] as String,
-            map['deleted_at'] as int,
-            map['updated_at'] as int,
-          );
+          final deletedAt = map['deleted_at'];
+          final updatedAt = map['updated_at'];
+          if (deletedAt is int && updatedAt is int) {
+            await AppDatabase.applyServerDelete(key, id, deletedAt, updatedAt);
+          }
         } else {
-          await AppDatabase.applyServerData(table, map);
+          await AppDatabase.applyServerData(key, map);
         }
       }
     }
 
-    final now = AppDatabase.timestamp();
-    await AppDatabase.setSyncMeta('last_sync_at', now.toString());
+    final lastSyncFromServer = decoded is Map ? decoded['last_sync'] : null;
+    final newLastSync = (lastSyncFromServer is int)
+        ? lastSyncFromServer
+        : AppDatabase.timestamp();
+
+    await AppDatabase.setSyncMeta('last_sync', newLastSync.toString());
+    await AppDatabase.setSyncMeta('last_sync_at', newLastSync.toString());
   }
 
   static Future<int> _getTotalPending() async {
@@ -256,7 +324,8 @@ class SyncService {
             response = await http.get(uri, headers: headers);
             break;
           case 'POST':
-            response = await http.post(uri, headers: headers, body: jsonEncode(body));
+            response =
+                await http.post(uri, headers: headers, body: jsonEncode(body));
             break;
           default:
             throw Exception('Unsupported method: $method');

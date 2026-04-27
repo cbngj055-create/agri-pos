@@ -21,7 +21,7 @@ export default function Sales() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-slate-800">سجل المبيعات والفواتير</h2>
         <Link 
-          to="/invoice"
+          to="/app/invoice"
           className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2 font-medium shadow-sm"
         >
           <FileText className="w-5 h-5" />

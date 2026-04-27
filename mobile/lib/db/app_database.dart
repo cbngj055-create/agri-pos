@@ -352,11 +352,39 @@ class AppDatabase {
   }
 
   static Future<void> markSynced(String table, String id) async {
-    await update(table, {'sync_status': 'synced'}, id);
+    if (isWeb) {
+      final key = '${table}:$id';
+      final existing = _webStorage[key] as Map<String, dynamic>?;
+      if (existing != null) {
+        _webStorage[key] = {...existing, 'sync_status': 'synced'};
+      }
+      return;
+    }
+    final db = await database;
+    await db!.update(
+      table,
+      {'sync_status': 'synced'},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   static Future<void> markConflict(String table, String id) async {
-    await update(table, {'sync_status': 'conflict'}, id);
+    if (isWeb) {
+      final key = '${table}:$id';
+      final existing = _webStorage[key] as Map<String, dynamic>?;
+      if (existing != null) {
+        _webStorage[key] = {...existing, 'sync_status': 'conflict'};
+      }
+      return;
+    }
+    final db = await database;
+    await db!.update(
+      table,
+      {'sync_status': 'conflict'},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   static Future<void> applyServerData(
