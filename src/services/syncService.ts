@@ -392,7 +392,7 @@ export async function login(email: string, password: string): Promise<{ token: s
     }
 
     startBackgroundSync();
-    await performFullSync();
+    void performFullSync();
   }
 
   return result;
@@ -414,7 +414,7 @@ export async function register(username: string, email: string, password: string
     setSyncMeta('device_id', crypto.randomUUID());
 
     startBackgroundSync();
-    await performFullSync();
+    void performFullSync();
   }
 
   return result;
@@ -425,6 +425,7 @@ export function logout(): void {
   setSyncMeta('auth_token', '');
   setSyncMeta('user_id', '');
   setSyncMeta('store_id', '');
+  sessionStorage.removeItem('pin_unlocked');
   currentState.status = 'idle';
   notifyListeners();
 }

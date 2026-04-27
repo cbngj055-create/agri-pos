@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
-import '../db/app_database.dart';
 
 class InvoiceScreen extends StatefulWidget {
   const InvoiceScreen({super.key});
@@ -17,7 +16,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   List<Map<String, dynamic>> _productSearch = [];
   bool _searching = false;
 
-  double get _subtotal => _cart.fold(0.0, (sum, item) => sum + (item['total'] as num).toDouble());
+  double get _subtotal =>
+      _cart.fold(0.0, (sum, item) => sum + (item['total'] as num).toDouble());
   double get _discount => double.tryParse(_discountController.text) ?? 0;
   double get _total => _subtotal - _discount;
 
@@ -38,7 +38,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   }
 
   void _addToCart(Map<String, dynamic> product) {
-    final existingIndex = _cart.indexWhere((item) => item['product_id'] == product['id']);
+    final existingIndex =
+        _cart.indexWhere((item) => item['product_id'] == product['id']);
     setState(() {
       if (existingIndex >= 0) {
         final existing = _cart[existingIndex];
@@ -77,7 +78,9 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       'discount': _discount,
       'paid': _total,
       'status': 'completed',
-      'notes': _customerNameController.text.isNotEmpty ? 'عميل: ${_customerNameController.text}' : null,
+      'notes': _customerNameController.text.isNotEmpty
+          ? 'عميل: ${_customerNameController.text}'
+          : null,
     });
 
     for (final item in _cart) {
@@ -140,9 +143,11 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                       return ListTile(
                         dense: true,
                         title: Text(p['name'] ?? ''),
-                        subtitle: Text('${p['sell_price']} ج.م | مخزون: ${p['stock']}'),
+                        subtitle: Text(
+                            '${p['sell_price']} ج.م | مخزون: ${p['stock']}'),
                         trailing: IconButton(
-                          icon: const Icon(Icons.add_circle, color: Color(0xFF064e3b)),
+                          icon: const Icon(Icons.add_circle,
+                              color: Color(0xFF064e3b)),
                           onPressed: () => _addToCart(p),
                         ),
                       );
@@ -160,11 +165,15 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey.shade300),
+                      Icon(Icons.shopping_cart_outlined,
+                          size: 64, color: Colors.grey.shade300),
                       const SizedBox(height: 16),
-                      Text('الفاتورة فارغة', style: TextStyle(color: Colors.grey.shade500, fontSize: 18)),
+                      Text('الفاتورة فارغة',
+                          style: TextStyle(
+                              color: Colors.grey.shade500, fontSize: 18)),
                       const SizedBox(height: 8),
-                      const Text('ابحث عن منتج وأضفه للفاتورة', style: TextStyle(color: Colors.grey)),
+                      const Text('ابحث عن منتج وأضفه للفاتورة',
+                          style: TextStyle(color: Colors.grey)),
                     ],
                   ),
                 )
@@ -173,16 +182,23 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                   itemBuilder: (ctx, i) {
                     final item = _cart[i];
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
                       child: ListTile(
-                        title: Text(item['product_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('الكمية: ${item['quantity']} × ${item['price']} ج.م'),
+                        title: Text(item['product_name'] ?? '',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(
+                            'الكمية: ${item['quantity']} × ${item['price']} ج.م'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('${item['total']} ج.م', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('${item['total']} ج.م',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              icon: const Icon(Icons.delete_outline,
+                                  color: Colors.red),
                               onPressed: () => _removeFromCart(i),
                             ),
                           ],
@@ -207,7 +223,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('المجموع:', style: TextStyle(fontSize: 16)),
-                    Text('${_subtotal.toStringAsFixed(2)} ج.م', style: const TextStyle(fontSize: 16)),
+                    Text('${_subtotal.toStringAsFixed(2)} ج.م',
+                        style: const TextStyle(fontSize: 16)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -220,7 +237,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                       child: TextField(
                         controller: _discountController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(suffixText: 'ج.م', isDense: true),
+                        decoration: const InputDecoration(
+                            suffixText: 'ج.م', isDense: true),
                         onChanged: (_) => setState(() {}),
                       ),
                     ),
@@ -230,8 +248,14 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('الإجمالي:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    Text('${_total.toStringAsFixed(2)} ج.م', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF064e3b))),
+                    const Text('الإجمالي:',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text('${_total.toStringAsFixed(2)} ج.م',
+                        style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF064e3b))),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -241,7 +265,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                   child: FilledButton.icon(
                     onPressed: _completeSale,
                     icon: const Icon(Icons.check_circle),
-                    label: const Text('إتمام عملية البيع', style: TextStyle(fontSize: 18)),
+                    label: const Text('إتمام عملية البيع',
+                        style: TextStyle(fontSize: 18)),
                   ),
                 ),
               ],

@@ -4,6 +4,14 @@ import { subscribeToSyncState, performFullSync, setApiUrl, getApiUrl, logout, Sy
 import { getSyncMeta, setSyncMeta } from '../db/database.js';
 import { useNavigate } from 'react-router-dom';
 
+async function sha256(text: string): Promise<string> {
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 export default function Settings() {
   const navigate = useNavigate();
   const [storeName, setStoreName] = useState('نماء الزراعية');
@@ -13,6 +21,11 @@ export default function Settings() {
   const [receiptFooter, setReceiptFooter] = useState('شكراً لزيارتكم، البضاعة المباعة لا ترد ولا تستبدل بعد 14 يوم.');
   const [isSaved, setIsSaved] = useState(false);
   const [apiUrl, setApiUrlState] = useState(getApiUrl());
+  const [pinEnabled, setPinEnabledState] = useState(getSyncMeta('pin_enabled') === '1');
+  const [pin, setPin] = useState('');
+  const [pinConfirm, setPinConfirm] = useState('');
+  const [pinMsg, setPinMsg] = useState('');
+  const [pinErr, setPinErr] = useState('');
   const [syncState, setSyncState] = useState<SyncState>({
     status: 'idle', lastSyncAt: 0, pendingCount: 0, conflictCount: 0, error: null, isOnline: navigator.onLine,
   });
@@ -37,6 +50,58 @@ export default function Settings() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const savePin = async () => {
+    setPinErr('');
+    setPinMsg('');
+
+    const cleanPin = pin.replace(/\D/g, '').slice(0, 4);
+    const cleanConfirm = pinConfirm.replace(/\D/g, '').slice(0, 4);
+
+    if (cleanPin.length !== 4) {
+      setPinErr('الرقم السري يجب أن يكون 4 أرقام');
+      return;
+    }
+    if (cleanPin !== cleanConfirm) {
+      setPinErr('تأكيد الرقم السري غير مطابق');
+      return;
+    }
+
+    const hashed = await sha256(cleanPin);
+    setSyncMeta('pin_hash', hashed);
+    setSyncMeta('pin_enabled', '1');
+    setPinEnabledState(true);
+    setPin('');
+    setPinConfirm('');
+    setPinMsg('تم حفظ الرقم السري');
+    setTimeout(() => setPinMsg(''), 3000);
+  };
+
+  const togglePinEnabled = (enabled: boolean) => {
+    setPinErr('');
+    setPinMsg('');
+
+    if (enabled) {
+      const hasHash = Boolean(getSyncMeta('pin_hash'));
+      if (!hasHash) {
+        setPinErr('لا يوجد رقم سري محفوظ. قم بتعيين رقم سري أولاً.');
+        setPinEnabledState(false);
+        return;
+      }
+      setSyncMeta('pin_enabled', '1');
+      setPinEnabledState(true);
+    } else {
+      setSyncMeta('pin_enabled', '0');
+      setPinEnabledState(false);
+      sessionStorage.removeItem('pin_unlocked');
+    }
+  };
+
+  const lockNow = () => {
+    sessionStorage.removeItem('pin_unlocked');
+    setPinMsg('تم قفل النظام، سيتم طلب الرقم السري عند العودة للوحة');
+    setTimeout(() => setPinMsg(''), 3000);
   };
 
   const formatLastSync = (ts: number) => {
@@ -208,6 +273,83 @@ export default function Settings() {
                <button type="button" className="w-full border border-slate-200 text-slate-600 hover:bg-slate-50 py-2 rounded-lg text-sm font-medium transition">
                  استعادة بيانات (استيراد)
                </button>
+             </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+             <div className="flex items-center gap-3 mb-4 text-slate-800">
+              <Building2 className="w-5 h-5 text-emerald-500" />
+              <h3 className="font-bold">الأمان (PIN أوفلاين)</h3>
+             </div>
+             <p className="text-sm text-slate-500 mb-4 leading-relaxed">
+               يمكنك تفعيل قفل برقم سري 4 أرقام عند فتح التطبيق. يعمل بدون إنترنت.
+             </p>
+
+             <div className="space-y-3">
+               <label className="flex items-center justify-between gap-3 cursor-pointer">
+                 <span className="text-sm text-slate-700">تفعيل قفل PIN</span>
+                 <input
+                   type="checkbox"
+                   className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                   checked={pinEnabled}
+                   onChange={(e) => togglePinEnabled(e.target.checked)}
+                 />
+               </label>
+
+               <div className="grid grid-cols-2 gap-3">
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">رقم سري جديد</label>
+                   <input
+                     type="password"
+                     inputMode="numeric"
+                     maxLength={4}
+                     className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+                     value={pin}
+                     onChange={(e) => {
+                       setPin(e.target.value.replace(/\D/g, '').slice(0, 4));
+                       setPinErr('');
+                       setPinMsg('');
+                     }}
+                     placeholder="1234"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">تأكيد</label>
+                   <input
+                     type="password"
+                     inputMode="numeric"
+                     maxLength={4}
+                     className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+                     value={pinConfirm}
+                     onChange={(e) => {
+                       setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4));
+                       setPinErr('');
+                       setPinMsg('');
+                     }}
+                     placeholder="1234"
+                   />
+                 </div>
+               </div>
+
+               {pinErr && <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">{pinErr}</div>}
+               {pinMsg && <div className="bg-emerald-50 text-emerald-700 text-sm p-3 rounded-lg">{pinMsg}</div>}
+
+               <div className="grid grid-cols-2 gap-2">
+                 <button
+                   type="button"
+                   onClick={() => void savePin()}
+                   className="w-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 py-2 rounded-lg text-sm font-medium transition"
+                 >
+                   حفظ PIN
+                 </button>
+                 <button
+                   type="button"
+                   onClick={lockNow}
+                   className="w-full bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 py-2 rounded-lg text-sm font-medium transition"
+                 >
+                   قفل الآن
+                 </button>
+               </div>
              </div>
           </div>
 

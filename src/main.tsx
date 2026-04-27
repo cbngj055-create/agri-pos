@@ -7,7 +7,7 @@ import { initSyncSystem } from './services/syncService.js';
 import { useStore } from './store/useStore.js';
 
 // Register PWA service worker
-if ('serviceWorker' in navigator) {
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch((err) => {
       console.warn('SW registration failed:', err);
@@ -16,7 +16,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // Listen for background sync messages from SW
-if ('serviceWorker' in navigator) {
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data?.type === 'PERFORM_SYNC') {
       import('./services/syncService.js').then(({ performFullSync }) => {

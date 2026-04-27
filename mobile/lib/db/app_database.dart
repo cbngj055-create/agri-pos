@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
-import 'dart:convert';
 
 class AppDatabase {
   static Database? _db;
@@ -241,7 +240,8 @@ class AppDatabase {
 
   static String generateId() => const Uuid().v4();
 
-  static int timestamp() => (DateTime.now().millisecondsSinceEpoch / 1000).round();
+  static int timestamp() =>
+      (DateTime.now().millisecondsSinceEpoch / 1000).round();
 
   static Future<List<Map<String, dynamic>>> query(
     String table, {
@@ -256,7 +256,8 @@ class AppDatabase {
       return List<Map<String, dynamic>>.from(data);
     }
     final db = await database;
-    return db!.query(table, where: where, whereArgs: whereArgs, orderBy: orderBy, limit: limit);
+    return db!.query(table,
+        where: where, whereArgs: whereArgs, orderBy: orderBy, limit: limit);
   }
 
   static Future<Map<String, dynamic>?> getById(String table, String id) async {
@@ -265,11 +266,13 @@ class AppDatabase {
       return _webStorage[key] as Map<String, dynamic>?;
     }
     final db = await database;
-    final results = await db!.query(table, where: 'id = ?', whereArgs: [id], limit: 1);
+    final results =
+        await db!.query(table, where: 'id = ?', whereArgs: [id], limit: 1);
     return results.isNotEmpty ? results.first : null;
   }
 
-  static Future<String> insert(String table, Map<String, dynamic> values) async {
+  static Future<String> insert(
+      String table, Map<String, dynamic> values) async {
     if (isWeb) {
       values['id'] = values['id'] ?? generateId();
       final now = timestamp();
@@ -293,7 +296,8 @@ class AppDatabase {
     return values['id'] as String;
   }
 
-  static Future<void> update(String table, Map<String, dynamic> values, String id) async {
+  static Future<void> update(
+      String table, Map<String, dynamic> values, String id) async {
     if (isWeb) {
       values['updated_at'] = timestamp();
       values['sync_status'] = 'pending';
@@ -309,7 +313,6 @@ class AppDatabase {
     await db!.update(table, values, where: 'id = ?', whereArgs: [id]);
     await _logSync(table, id, 'update');
   }
-
 
   static Future<void> softDelete(String table, String id) async {
     if (isWeb) {
@@ -356,7 +359,8 @@ class AppDatabase {
     await update(table, {'sync_status': 'conflict'}, id);
   }
 
-  static Future<void> applyServerData(String table, Map<String, dynamic> data) async {
+  static Future<void> applyServerData(
+      String table, Map<String, dynamic> data) async {
     final existing = await getById(table, data['id'] as String);
 
     if (existing == null) {
@@ -382,12 +386,20 @@ class AppDatabase {
     }
   }
 
-  static Future<void> applyServerDelete(String table, String id, int deletedAt, int updatedAt) async {
+  static Future<void> applyServerDelete(
+      String table, String id, int deletedAt, int updatedAt) async {
     final existing = await getById(table, id);
     if (existing != null) {
       final localUpdated = existing['updated_at'] as int? ?? 0;
       if (updatedAt >= localUpdated) {
-        await update(table, {'deleted_at': deletedAt, 'updated_at': updatedAt, 'sync_status': 'synced'}, id);
+        await update(
+            table,
+            {
+              'deleted_at': deletedAt,
+              'updated_at': updatedAt,
+              'sync_status': 'synced'
+            },
+            id);
       } else {
         await markConflict(table, id);
       }
@@ -401,7 +413,8 @@ class AppDatabase {
       return _webStorage['meta:$key'] as String?;
     }
     final db = await database;
-    final results = await db!.query('sync_meta', where: 'key = ?', whereArgs: [key]);
+    final results =
+        await db!.query('sync_meta', where: 'key = ?', whereArgs: [key]);
     return results.isNotEmpty ? results.first['value'] as String? : null;
   }
 
@@ -420,7 +433,8 @@ class AppDatabase {
 
   // ===== Sync Log =====
 
-  static Future<void> _logSync(String table, String recordId, String action) async {
+  static Future<void> _logSync(
+      String table, String recordId, String action) async {
     if (isWeb) {
       return;
     }

@@ -30,10 +30,10 @@ router.post('/register', async (req: Request, res: Response) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const now = Math.floor(Date.now() / 1000);
 
-    // Create store
+    // Create store first WITHOUT owner_id to avoid FK ordering issues across environments
     await client.query(
-      'INSERT INTO stores (id, name, owner_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $4)',
-      [storeId, storeName || `${username}'s Store`, userId, now]
+      'INSERT INTO stores (id, name, owner_id, created_at, updated_at) VALUES ($1, $2, NULL, $3, $3)',
+      [storeId, storeName || `${username}'s Store`, now]
     );
 
     // Create user
@@ -41,6 +41,9 @@ router.post('/register', async (req: Request, res: Response) => {
       'INSERT INTO users (id, username, email, password_hash, store_id, role, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $7)',
       [userId, username, email, passwordHash, storeId, 'owner', now]
     );
+
+    // Link store -> owner
+    await client.query('UPDATE stores SET owner_id = $1, updated_at = $2 WHERE id = $3', [userId, now, storeId]);
 
     await client.query('COMMIT');
 

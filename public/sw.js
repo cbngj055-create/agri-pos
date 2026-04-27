@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agri-pos-v1';
+const CACHE_NAME = 'agri-pos-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -30,6 +30,15 @@ self.addEventListener('fetch', (event) => {
 
   // Skip API calls - they go directly to network
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/sync/') || url.pathname.startsWith('/auth/')) {
+    return;
+  }
+
+  // Never handle Vite/dev-internal paths or wasm assets (avoid serving cached HTML instead of wasm)
+  if (
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.endsWith('.wasm')
+  ) {
     return;
   }
 
