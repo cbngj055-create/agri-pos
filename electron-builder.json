@@ -1,6 +1,6 @@
 {
   "appId": "com.agri-pos.desktop",
-  "productName": "المتجر الزراعي",
+  "productName": "AgriPOS",
   "directories": {
     "output": "release"
   },
@@ -17,7 +17,7 @@
       }
     ],
     "icon": "public/icons/icon-512x512.png",
-    "artifactName": "agri-pos-setup-${version}.${ext}"
+    "artifactName": "agri-pos-setup.${ext}"
   },
   "mac": {
     "target": "dmg",
