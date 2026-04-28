@@ -11,6 +11,8 @@ import dataRoutes from './routes/data.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+app.set('trust proxy', 1);
+
 app.use(helmet());
 
 const allowOrigins = (process.env.CORS_ORIGINS || '')
